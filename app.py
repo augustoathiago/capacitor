@@ -457,10 +457,10 @@ with st.container(border=True):
 
 
 # =========================================================
-# Tempo de relaxação τ
+# Tempo de relaxação τ do capacitor equivalente
 # =========================================================
 with st.container(border=True):
-    st.subheader("Tempo de relaxação τ")
+    st.subheader("Tempo de relaxação τ do capacitor equivalente")
     st.latex(r"\tau = R\,C_{eq}")
     st.latex(
         rf"\tau = {r_ohm:.0f}\,\Omega \cdot {latex_num(Ceq, 6)}\,F = {latex_num(tau, 6)}\,s"
@@ -468,8 +468,8 @@ with st.container(border=True):
     st.success(f"Valor de τ: {eng_value(tau, 's')}")
 
     st.info(
-        f"No instante t = tau = {eng_value(tau, 's')}, a tensão no capacitor atinge aproximadamente "
-        f"63,2% de V0, enquanto a corrente cai para aproximadamente 36,8% de I0."
+        f"No instante t = {eng_value(tau, 's')}, a tensão/carga no capacitor atinge aproximadamente "
+        f"63,2% dos valores máximos, enquanto a corrente cai para 36,8% da corrente inicial."
     )
 
 
@@ -490,9 +490,9 @@ with st.container(border=True):
     st.subheader("Corrente máxima I0")
     st.write("**Balanço de tensão elétrica:**")
     st.latex(r"V_f = V_r + V_c")
-    st.write("onde **Vf**, **Vr** e **Vc** são as tensões na fonte, no resistor e no capacitor, respectivamente.")
+    st.write("onde **Vf**, **Vr** e **Vc** são as tensões na fonte, no resistor e no capacitor equivalente, respectivamente.")
     st.write(
-        "Quando totalmente descarregado, não há tensão no capacitor. Nessa situação, a tensão do resistor equivale à tensão da fonte. "
+        "Quando totalmente descarregado, não há tensão no capacitor equivalente. Nessa situação, a tensão do resistor equivale à tensão da fonte. "
         "Logo, pela Lei de Ohm, é possível determinar a corrente máxima:"
     )
     st.latex(r"V_r = R\,I_0 \Rightarrow I_0 = \frac{V_f}{R}")
