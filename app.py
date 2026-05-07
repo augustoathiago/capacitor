@@ -430,7 +430,8 @@ with st.container(border=True):
 # Capacitância equivalente
 # =========================================================
 with st.container(border=True):
-    st.subheader("Capacitância equivalente C_{eq}")
+    st.markdown("<div class='section-title'>Capacitância equivalente C<sub>eq</sub></div>", unsafe_allow_html=True)
+    st.subheader("Capacitância equivalente")
 
     # Série em uma linha só
     st.latex(
