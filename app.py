@@ -430,7 +430,7 @@ with st.container(border=True):
 # Capacitância equivalente
 # =========================================================
 with st.container(border=True):
-    st.subheader("Capacitância equivalente C<sub>eq</sub>")
+    st.subheader("Capacitância equivalente")
 
     # Série em uma linha só
     st.latex(
@@ -506,10 +506,7 @@ with st.container(border=True):
 # Comportamento durante carga do capacitor equivalente
 # =========================================================
 with st.container(border=True):
-    st.markdown(
-        "<div class='section-title'>Comportamento durante carga do capacitor equivalente</div>",
-        unsafe_allow_html=True,
-    )
+    st.subheader("Comportamento durante carga do capacitor equivalente")
 
     st.write("Equações em função do tempo para o capacitor equivalente em um circuito RC em carga:")
 
@@ -780,10 +777,7 @@ def make_charge_plot(t, q, tau, q_tau, q0, t_end):
 # Gráficos durante carga do capacitor equivalente
 # =========================================================
 with st.container(border=True):
-    st.markdown(
-        "<div class='section-title'>Gráficos durante carga do capacitor equivalente</div>",
-        unsafe_allow_html=True,
-    )
+    st.subheader("Gráficos durante carga do capacitor equivalente")
     st.markdown(
         "<p class='small-note'>Os eixos são ajustados automaticamente para cada situação e ficam bloqueados para interação.</p>",
         unsafe_allow_html=True,
