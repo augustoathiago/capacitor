@@ -768,7 +768,7 @@ def make_charge_plot(t, q, tau, q_tau, q0, t_end):
 
     base_layout(
         fig,
-        title="Carga armazenada q(t)",
+        title="Carga armazenada no capacitor equivalente q(t)",
         y_title="q(t) [C]",
         x_range=x_range,
         y_range=y_range,
