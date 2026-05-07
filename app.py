@@ -34,7 +34,7 @@ st.markdown(
     .small-note {
         color: #555;
         font-size: 0.92rem;
-        line-height: 1.4;
+        line-height: 1.45;
     }
     .circuit-scroll {
         width: 100%;
@@ -65,7 +65,7 @@ st.markdown(
 
 
 # =========================================================
-# Funções auxiliares de formatação
+# Funções auxiliares
 # =========================================================
 SUPERSCRIPT = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
 
@@ -158,18 +158,6 @@ def latex_num(x: float, decimals: int = 3) -> str:
         return f"{x:.{decimals}f}"
     exp = int(math.floor(math.log10(ax)))
     mant = x / (10 ** exp)
-    return f"{mant:.{decimalsf}}\\times 10^{{{exp}}}"
-
-
-# Corrigindo pequeno detalhe do latex_num para manter robustez
-def latex_num(x: float, decimals: int = 3) -> str:
-    if x == 0:
-        return "0"
-    ax = abs(x)
-    if 1e-2 <= ax < 1e4:
-        return f"{x:.{decimals}f}"
-    exp = int(math.floor(math.log10(ax)))
-    mant = x / (10 ** exp)
     return f"{mant:.{decimals}f}\\times 10^{{{exp}}}"
 
 
@@ -249,7 +237,7 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
     svg.append(f'<line x1="510" y1="165" x2="560" y2="165" stroke="{wire}" stroke-width="4" />')
     svg.append(f'<text x="435" y="125" text-anchor="middle" class="label">R = {eng_value(r_ohm, "Ω")}</text>')
 
-    # Box de Ceq deslocado mais à direita
+    # Box de Ceq mais à direita
     svg.append('<rect x="1080" y="28" width="210" height="92" rx="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>')
     svg.append('<text x="1185" y="63" text-anchor="middle" class="small">Capacitância equivalente</text>')
     svg.append(f'<text x="1185" y="95" text-anchor="middle" class="label">Ceq = {eng_value(ceq_uF * 1e-6, "F")}</text>')
@@ -382,23 +370,25 @@ tau = max(tau, 1e-12)
 
 V0 = v_source
 I0 = v_source / r_ohm
-Q0 = Ceq * V0  # carga máxima teórica
+q0 = Ceq * V0
 
-# Faixa de tempo dinâmica para cada situação
+# Tempo dinâmico para cada situação
 t_end = 5 * tau
+t_end = max(t_end, 1e-9)
+
 t = np.linspace(0, t_end, 1200)
 
 Vc = V0 * (1 - np.exp(-t / tau))
 I = I0 * np.exp(-t / tau)
-q = Q0 * (1 - np.exp(-t / tau))
+q = q0 * (1 - np.exp(-t / tau))
 
-vc_tau = V0 * (1 - math.exp(-1))
-i_tau = I0 * math.exp(-1)
-q_tau = Q0 * (1 - math.exp(-1))
+V_tau = V0 * (1 - math.exp(-1))
+I_tau = I0 * math.exp(-1)
+q_tau = q0 * (1 - math.exp(-1))
 
 
 # =========================================================
-# Imagem do circuito
+# Imagem do circuito RC
 # =========================================================
 with st.container(border=True):
     st.subheader("Imagem do circuito RC")
@@ -453,7 +443,7 @@ with st.container(border=True):
 
 
 # =========================================================
-# Tensão máxima
+# Tensão máxima V0
 # =========================================================
 with st.container(border=True):
     st.subheader("Tensão máxima V0")
@@ -463,7 +453,7 @@ with st.container(border=True):
 
 
 # =========================================================
-# Corrente máxima
+# Corrente máxima I0
 # =========================================================
 with st.container(border=True):
     st.subheader("Corrente máxima I0")
@@ -482,7 +472,7 @@ with st.container(border=True):
 
 
 # =========================================================
-# Comportamento durante carga
+# Comportamento durante carga do capacitor equivalente
 # =========================================================
 with st.container(border=True):
     st.subheader("Comportamento durante carga do capacitor equivalente")
@@ -504,189 +494,270 @@ with st.container(border=True):
     )
 
     st.latex(
-        rf"q(t) = {latex_num(Q0, 6)}\left(1 - e^{{-t/{latex_num(tau, 6)}}}\right)\,C"
+        rf"q(t) = {latex_num(q0, 6)}\left(1 - e^{{-t/{latex_num(tau, 6)}}}\right)\,C"
     )
 
 
 # =========================================================
-# Funções para gráficos
+# Funções dos gráficos
 # =========================================================
-def make_plot(
-    x,
-    y,
-    title,
-    y_title,
-    y_max_display,
-    tau_x,
-    tau_y,
-    curve_name,
-    line_color,
-    max_value,
-    max_label,
-    max_point_x,
-    max_point_y,
-):
-    fig = go.Figure()
+PLOT_FONT_COLOR = "#111827"
+GRID_COLOR = "#d1d5db"
+TAU_COLOR = "#111827"
+MAX_COLOR = "#7c3aed"
 
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=y,
-            mode="lines",
-            name=curve_name,
-            line=dict(color=line_color, width=3),
-            hovertemplate="t = %{x:.4f} s<br>" + y_title + " = %{y:.6f}<extra></extra>",
-        )
+
+def plot_config():
+    return {
+        "displaylogo": False,
+        "displayModeBar": False,
+        "scrollZoom": False,
+        "responsive": True,
+    }
+
+
+def base_layout(fig, title, y_title, x_range, y_range):
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=20, color=PLOT_FONT_COLOR)),
+        margin=dict(l=20, r=20, t=60, b=20),
+        height=430,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(color=PLOT_FONT_COLOR, size=14),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+            font=dict(color=PLOT_FONT_COLOR),
+        ),
+        xaxis=dict(
+            title="Tempo t (s)",
+            range=x_range,
+            fixedrange=True,
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+            zeroline=False,
+            tickfont=dict(color=PLOT_FONT_COLOR),
+            title_font=dict(color=PLOT_FONT_COLOR),
+        ),
+        yaxis=dict(
+            title=y_title,
+            range=y_range,
+            fixedrange=True,
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+            zeroline=False,
+            tickfont=dict(color=PLOT_FONT_COLOR),
+            title_font=dict(color=PLOT_FONT_COLOR),
+        ),
     )
+    return fig
 
-    # Destaque em tau
+
+def add_tau_marker(fig, tau_x, tau_y, label_text):
     fig.add_trace(
         go.Scatter(
             x=[tau_x],
             y=[tau_y],
             mode="markers",
             name="τ",
-            marker=dict(size=10, color="#111827", symbol="circle"),
+            marker=dict(size=10, color=TAU_COLOR, symbol="circle"),
             hovertemplate="τ = %{x:.4f} s<br>Valor = %{y:.6f}<extra></extra>",
+            showlegend=True,
         )
     )
-
-    # Destaque do valor máximo
-    fig.add_trace(
-        go.Scatter(
-            x=[max_point_x],
-            y=[max_point_y],
-            mode="markers",
-            name="Máximo",
-            marker=dict(size=10, color="#7c3aed", symbol="diamond"),
-            hovertemplate="Máximo = %{y:.6f}<extra></extra>",
-        )
-    )
-
-    fig.add_vline(x=tau_x, line_width=2, line_dash="dash", line_color="#6b7280")
-    fig.add_hline(y=tau_y, line_width=2, line_dash="dot", line_color="#9ca3af")
-
-    # Linha horizontal do máximo
-    fig.add_hline(y=max_value, line_width=2, line_dash="dash", line_color="#7c3aed")
+    fig.add_vline(x=tau_x, line_width=2, line_dash="dash", line_color="#4b5563")
+    fig.add_hline(y=tau_y, line_width=1.8, line_dash="dot", line_color="#6b7280")
 
     fig.add_annotation(
         x=tau_x,
         y=tau_y,
-        text=f"τ = {tau_x:.4f} s<br>y(τ) = {tau_y:.6f}",
+        text=label_text,
         showarrow=True,
         arrowhead=2,
         ax=70,
-        ay=-65,
-        bgcolor="rgba(255,255,255,0.92)",
-        bordercolor="#d1d5db",
+        ay=-60,
+        font=dict(color=PLOT_FONT_COLOR, size=13),
+        bgcolor="rgba(255,255,255,0.96)",
+        bordercolor="#9ca3af",
+        borderwidth=1.2,
     )
+
+
+def add_max_indicator(fig, max_value, label_text, x_pos_label, y_pos_label):
+    fig.add_hline(y=max_value, line_width=2, line_dash="dash", line_color=MAX_COLOR)
 
     fig.add_annotation(
-        x=max_point_x,
-        y=max_value,
-        text=max_label,
-        showarrow=True,
-        arrowhead=2,
-        ax=-85,
-        ay=-50,
-        bgcolor="rgba(255,255,255,0.95)",
-        bordercolor="#d1d5db",
+        x=x_pos_label,
+        y=y_pos_label,
+        text=label_text,
+        showarrow=False,
+        font=dict(color=PLOT_FONT_COLOR, size=13),
+        bgcolor="rgba(255,255,255,0.96)",
+        bordercolor=MAX_COLOR,
+        borderwidth=1.2,
     )
 
-    fig.update_layout(
-        title=title,
-        margin=dict(l=20, r=20, t=55, b=20),
-        height=420,
-        xaxis=dict(
-            title="Tempo t (s)",
-            range=[0, max(t_end, 1e-9)],
-            fixedrange=False,
-            showgrid=True,
-            gridcolor="#e5e7eb",
-            zeroline=False,
-        ),
-        yaxis=dict(
-            title=y_title,
-            range=[0, max(y_max_display, 1e-12)],
-            fixedrange=False,
-            showgrid=True,
-            gridcolor="#e5e7eb",
-            zeroline=False,
-        ),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+
+def make_voltage_plot(t, Vc, tau, V_tau, V0, t_end):
+    x_margin = 0.10 * t_end
+    x_range = [0, t_end + x_margin]
+    y_range = [0, V0 * 1.18]
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=t,
+            y=Vc,
+            mode="lines",
+            name="Vc(t)",
+            line=dict(color="#2563eb", width=4),
+            hovertemplate="t = %{x:.4f} s<br>Vc(t) = %{y:.6f} V<extra></extra>",
+        )
+    )
+
+    add_tau_marker(
+        fig,
+        tau_x=tau,
+        tau_y=V_tau,
+        label_text=f"τ = {format_number(tau, 4)} s<br>V(τ) = {format_number(V_tau, 4)} V",
+    )
+
+    add_max_indicator(
+        fig,
+        max_value=V0,
+        label_text=f"V₀ = {eng_value(V0, 'V')}",
+        x_pos_label=t_end * 0.72,
+        y_pos_label=V0 * 1.03,
+    )
+
+    base_layout(
+        fig,
+        title="Tensão no capacitor equivalente Vc(t)",
+        y_title="Vc(t) [V]",
+        x_range=x_range,
+        y_range=y_range,
+    )
+    return fig
+
+
+def make_current_plot(t, I, tau, I_tau, I0, t_end):
+    x_margin = 0.10 * t_end
+    x_range = [0, t_end + x_margin]
+    y_range = [0, I0 * 1.22]
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=t,
+            y=I,
+            mode="lines",
+            name="I(t)",
+            line=dict(color="#dc2626", width=4),
+            hovertemplate="t = %{x:.4f} s<br>I(t) = %{y:.6f} A<extra></extra>",
+        )
+    )
+
+    # marcador visível do valor inicial
+    fig.add_trace(
+        go.Scatter(
+            x=[0],
+            y=[I0],
+            mode="markers",
+            name="I₀",
+            marker=dict(size=10, color=MAX_COLOR, symbol="diamond"),
+            hovertemplate="I₀ = %{y:.6f} A<extra></extra>",
+            showlegend=True,
+        )
+    )
+
+    add_tau_marker(
+        fig,
+        tau_x=tau,
+        tau_y=I_tau,
+        label_text=f"τ = {format_number(tau, 4)} s<br>I(τ) = {format_number(I_tau, 6)} A",
+    )
+
+    add_max_indicator(
+        fig,
+        max_value=I0,
+        label_text=f"I₀ = {eng_value(I0, 'A')}",
+        x_pos_label=t_end * 0.22,
+        y_pos_label=I0 * 1.07,
+    )
+
+    base_layout(
+        fig,
+        title="Corrente no circuito I(t)",
+        y_title="I(t) [A]",
+        x_range=x_range,
+        y_range=y_range,
+    )
+    return fig
+
+
+def make_charge_plot(t, q, tau, q_tau, q0, t_end):
+    x_margin = 0.10 * t_end
+    x_range = [0, t_end + x_margin]
+    y_range = [0, q0 * 1.18]
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=t,
+            y=q,
+            mode="lines",
+            name="q(t)",
+            line=dict(color="#16a34a", width=4),
+            hovertemplate="t = %{x:.4f} s<br>q(t) = %{y:.6f} C<extra></extra>",
+        )
+    )
+
+    add_tau_marker(
+        fig,
+        tau_x=tau,
+        tau_y=q_tau,
+        label_text=f"τ = {format_number(tau, 4)} s<br>q(τ) = {format_number(q_tau, 6)} C",
+    )
+
+    add_max_indicator(
+        fig,
+        max_value=q0,
+        label_text=f"q₀ = {eng_value(q0, 'C')}",
+        x_pos_label=t_end * 0.72,
+        y_pos_label=q0 * 1.03,
+    )
+
+    base_layout(
+        fig,
+        title="Carga armazenada q(t)",
+        y_title="q(t) [C]",
+        x_range=x_range,
+        y_range=y_range,
     )
     return fig
 
 
 # =========================================================
-# Gráficos
+# Gráficos durante carga do capacitor equivalente
 # =========================================================
 with st.container(border=True):
     st.subheader("Gráficos durante carga do capacitor equivalente")
-
     st.markdown(
-        "<p class='small-note'>Os eixos são redimensionados automaticamente conforme os parâmetros escolhidos, para que as curvas sejam bem visualizadas.</p>",
+        "<p class='small-note'>Os eixos são ajustados automaticamente para cada situação e ficam bloqueados para interação, "
+        "facilitando a visualização completa das curvas e dos indicadores.</p>",
         unsafe_allow_html=True,
     )
 
-    # Limites dinâmicos
-    v_ymax = V0 * 1.10
-    i_ymax = I0 * 1.10
-    q_ymax = Q0 * 1.10
+    fig_v = make_voltage_plot(t, Vc, tau, V_tau, V0, t_end)
+    fig_i = make_current_plot(t, I, tau, I_tau, I0, t_end)
+    fig_q = make_charge_plot(t, q, tau, q_tau, q0, t_end)
 
-    # Para tensão e carga, o máximo teórico é o valor final
-    fig_v = make_plot(
-        x=t,
-        y=Vc,
-        title="Tensão no capacitor equivalente Vc(t)",
-        y_title="Vc(t) [V]",
-        y_max_display=v_ymax,
-        tau_x=tau,
-        tau_y=vc_tau,
-        curve_name="Vc(t)",
-        line_color="#2563eb",
-        max_value=V0,
-        max_label=f"Vmáx = {eng_value(V0, 'V')}",
-        max_point_x=t_end,
-        max_point_y=V0,
-    )
-
-    # Corrente máxima em t=0
-    fig_i = make_plot(
-        x=t,
-        y=I,
-        title="Corrente no circuito I(t)",
-        y_title="I(t) [A]",
-        y_max_display=i_ymax,
-        tau_x=tau,
-        tau_y=i_tau,
-        curve_name="I(t)",
-        line_color="#dc2626",
-        max_value=I0,
-        max_label=f"Imáx = {eng_value(I0, 'A')}",
-        max_point_x=0,
-        max_point_y=I0,
-    )
-
-    # Carga máxima teórica
-    fig_q = make_plot(
-        x=t,
-        y=q,
-        title="Carga armazenada q(t)",
-        y_title="q(t) [C]",
-        y_max_display=q_ymax,
-        tau_x=tau,
-        tau_y=q_tau,
-        curve_name="q(t)",
-        line_color="#16a34a",
-        max_value=Q0,
-        max_label=f"qmáx = {eng_value(Q0, 'C')}",
-        max_point_x=t_end,
-        max_point_y=Q0,
-    )
-
-    st.plotly_chart(fig_v, use_container_width=True, config={"displaylogo": False, "responsive": True})
-    st.plotly_chart(fig_i, use_container_width=True, config={"displaylogo": False, "responsive": True})
-    st.plotly_chart(fig_q, use_container_width=True, config={"displaylogo": False, "responsive": True})
+    st.plotly_chart(fig_v, use_container_width=True, config=plot_config())
+    st.plotly_chart(fig_i, use_container_width=True, config=plot_config())
+    st.plotly_chart(fig_q, use_container_width=True, config=plot_config())
