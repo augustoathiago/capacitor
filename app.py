@@ -58,6 +58,18 @@ st.markdown(
         color: #5b6470;
         background: #fafbfd;
     }
+    .section-title {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+        color: #111827;
+    }
+    .result-line {
+        font-size: 1rem;
+        color: #111827;
+        margin-top: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -204,6 +216,12 @@ def svg_cap_horizontal(x_left, y, plate_h=54, gap=16, color="#222"):
     """
 
 
+def ceq_svg_label() -> str:
+    return """
+    C<tspan baseline-shift="sub" font-size="70%">eq</tspan>
+    """
+
+
 def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source: float, ceq_uF: float) -> str:
     wire = "#1f2937"
     accent = "#0f766e"
@@ -216,9 +234,11 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
     svg = [
         f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">',
         f'<rect x="0" y="0" width="{width}" height="{height}" fill="{bg}" rx="16" />',
-        '<style>.label{font: 600 22px Arial, sans-serif; fill:' + text + ';} '
-        '.small{font: 500 18px Arial, sans-serif; fill:' + text + ';} '
-        '.tiny{font: 500 16px Arial, sans-serif; fill:' + text + ';}</style>'
+        '<style>'
+        '.label{font: 600 22px Arial, sans-serif; fill:' + text + ';}'
+        '.small{font: 500 18px Arial, sans-serif; fill:' + text + ';}'
+        '.tiny{font: 500 16px Arial, sans-serif; fill:' + text + ';}'
+        '</style>'
     ]
 
     # Fonte
@@ -237,10 +257,12 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
     svg.append(f'<line x1="510" y1="165" x2="560" y2="165" stroke="{wire}" stroke-width="4" />')
     svg.append(f'<text x="435" y="125" text-anchor="middle" class="label">R = {eng_value(r_ohm, "Ω")}</text>')
 
-    # Box de Ceq mais à direita
+    # Box de C_eq
     svg.append('<rect x="1080" y="28" width="210" height="92" rx="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>')
     svg.append('<text x="1185" y="63" text-anchor="middle" class="small">Capacitância equivalente</text>')
-    svg.append(f'<text x="1185" y="95" text-anchor="middle" class="label">Ceq = {eng_value(ceq_uF * 1e-6, "F")}</text>')
+    svg.append(
+        f'<text x="1185" y="95" text-anchor="middle" class="label">C<tspan baseline-shift="sub" font-size="70%">eq</tspan> = {eng_value(ceq_uF * 1e-6, "F")}</text>'
+    )
 
     if config == "Série":
         # Série
@@ -251,9 +273,11 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
         svg.append(svg_cap_series(850, 165, color=accent))
         svg.append(f'<line x1="810" y1="165" x2="842" y2="165" stroke="{wire}" stroke-width="4" />')
         svg.append(f'<line x1="858" y1="165" x2="1000" y2="165" stroke="{wire}" stroke-width="4" />')
-        svg.append(f'<line x1="1000" y1="345" x2="120" y2="345" stroke="{wire}" stroke-width="4" />')
 
-        # Rótulos reposicionados
+        # fio vertical final reduzido
+        svg.append(f'<line x1="1000" y1="165" x2="1000" y2="255" stroke="{wire}" stroke-width="4" />')
+
+        # sem fio horizontal final de retorno
         svg.append(f'<text x="850" y="120" text-anchor="middle" class="label">C₂ = {format_number(c2_uF)} µF</text>')
         svg.append('<text x="775" y="225" text-anchor="middle" class="small">Capacitores em série</text>')
         svg.append(f'<text x="700" y="265" text-anchor="middle" class="label">C₁ = {format_number(c1_uF)} µF</text>')
@@ -275,9 +299,11 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
         svg.append(f'<circle cx="900" cy="95" r="5" fill="{wire}" />')
         svg.append(f'<circle cx="900" cy="255" r="5" fill="{wire}" />')
         svg.append(f'<line x1="900" y1="175" x2="1000" y2="175" stroke="{wire}" stroke-width="4" />')
-        svg.append(f'<line x1="1000" y1="175" x2="1000" y2="345" stroke="{wire}" stroke-width="4" />')
-        svg.append(f'<line x1="1000" y1="345" x2="120" y2="345" stroke="{wire}" stroke-width="4" />')
 
+        # fio vertical final reduzido
+        svg.append(f'<line x1="1000" y1="175" x2="1000" y2="255" stroke="{wire}" stroke-width="4" />')
+
+        # sem fio horizontal final de retorno
         svg.append(f'<text x="790" y="52" text-anchor="middle" class="label">C₁ = {format_number(c1_uF)} µF</text>')
         svg.append(f'<text x="790" y="212" text-anchor="middle" class="label">C₂ = {format_number(c2_uF)} µF</text>')
         svg.append('<text x="800" y="307" text-anchor="middle" class="small">Capacitores em paralelo</text>')
@@ -371,7 +397,7 @@ V0 = v_source
 I0 = v_source / r_ohm
 q0 = Ceq * V0
 
-# Tempo dinâmico para cada situação
+# Tempo dinâmico
 t_end = 5 * tau
 t_end = max(t_end, 1e-9)
 
@@ -403,10 +429,12 @@ with st.container(border=True):
 # Capacitância equivalente
 # =========================================================
 with st.container(border=True):
-    st.subheader("Capacitância equivalente Ceq")
+    st.markdown("<div class='section-title'>Capacitância equivalente C<sub>eq</sub></div>", unsafe_allow_html=True)
 
-    st.latex(r"\text{Série:}\quad \frac{1}{C_{eq}} = \frac{1}{C_1} + \frac{1}{C_2}")
-    st.latex(r"\text{Série:}\quad C_{eq} = \frac{C_1 C_2}{C_1 + C_2}")
+    # Série em uma linha só
+    st.latex(
+        r"\text{Série:}\quad \frac{1}{C_{eq}} = \frac{1}{C_1} + \frac{1}{C_2} \qquad C_{eq} = \frac{C_1 C_2}{C_1 + C_2}"
+    )
     st.latex(r"\text{Paralelo:}\quad C_{eq} = C_1 + C_2")
 
     if config == "Série":
@@ -421,7 +449,10 @@ with st.container(border=True):
             rf"C_{{eq}} = {c1_uF:.2f}\,\mu F + {c2_uF:.2f}\,\mu F = {Ceq*1e6:.3f}\,\mu F"
         )
 
-    st.success(f"Valor de Ceq: {eng_value(Ceq, 'F')}")
+    st.markdown(
+        f"<div class='result-line'><strong>Valor de C<sub>eq</sub>:</strong> {eng_value(Ceq, 'F')}</div>",
+        unsafe_allow_html=True,
+    )
 
 
 # =========================================================
@@ -474,7 +505,10 @@ with st.container(border=True):
 # Comportamento durante carga do capacitor equivalente
 # =========================================================
 with st.container(border=True):
-    st.subheader("Comportamento durante carga do capacitor equivalente")
+    st.markdown(
+        "<div class='section-title'>Comportamento durante carga do capacitor equivalente</div>",
+        unsafe_allow_html=True,
+    )
 
     st.write("Equações em função do tempo para o capacitor equivalente em um circuito RC em carga:")
 
@@ -498,7 +532,7 @@ with st.container(border=True):
 
 
 # =========================================================
-# Funções dos gráficos
+# Gráficos
 # =========================================================
 PLOT_FONT_COLOR = "#111827"
 GRID_COLOR = "#d1d5db"
@@ -661,7 +695,6 @@ def make_current_plot(t, I, tau, I_tau, I0, t_end):
         )
     )
 
-    # marcador visível do valor inicial
     fig.add_trace(
         go.Scatter(
             x=[0],
@@ -691,7 +724,7 @@ def make_current_plot(t, I, tau, I_tau, I0, t_end):
 
     base_layout(
         fig,
-        title="Corrente no circuito I(t)",
+        title="Corrente no capacitor equivalente I(t)",
         y_title="I(t) [A]",
         x_range=x_range,
         y_range=y_range,
@@ -746,10 +779,12 @@ def make_charge_plot(t, q, tau, q_tau, q0, t_end):
 # Gráficos durante carga do capacitor equivalente
 # =========================================================
 with st.container(border=True):
-    st.subheader("Gráficos durante carga do capacitor equivalente")
     st.markdown(
-        "<p class='small-note'>Os eixos são ajustados automaticamente para cada situação e ficam bloqueados para interação, "
-        "facilitando a visualização completa das curvas e dos indicadores.</p>",
+        "<div class='section-title'>Gráficos durante carga do capacitor equivalente</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<p class='small-note'>Os eixos são ajustados automaticamente para cada situação e ficam bloqueados para interação.</p>",
         unsafe_allow_html=True,
     )
 
