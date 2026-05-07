@@ -478,7 +478,7 @@ with st.container(border=True):
 # Tensão máxima V0
 # =========================================================
 with st.container(border=True):
-    st.subheader("Tensão máxima V0")
+    st.subheader("Tensão máxima V0 do capacitor equivalente")
     st.write(
         f"Quando totalmente carregado, o capacitor terá tensão máxima igual à tensão da fonte: **{eng_value(v_source, 'V')}**."
     )
