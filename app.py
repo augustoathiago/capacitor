@@ -287,6 +287,7 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
 
     else:
         # Paralelo
+        
         svg.append(f'<line x1="560" y1="165" x2="650" y2="165" stroke="{wire}" stroke-width="4" />')
         svg.append(f'<circle cx="650" cy="165" r="5" fill="{wire}" />')
         svg.append(f'<line x1="650" y1="165" x2="650" y2="95" stroke="{wire}" stroke-width="4" />')
@@ -302,11 +303,9 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
         svg.append(f'<circle cx="900" cy="95" r="5" fill="{wire}" />')
         svg.append(f'<circle cx="900" cy="255" r="5" fill="{wire}" />')
         svg.append(f'<line x1="900" y1="175" x2="1000" y2="175" stroke="{wire}" stroke-width="4" />')
+        svg.append(f'<line x1="1000" y1="175" x2="1000" y2="345" stroke="{wire}" stroke-width="4" />')
+        svg.append(f'<line x1="1000" y1="345" x2="120" y2="345" stroke="{wire}" stroke-width="4" />')
 
-        # fio vertical final reduzido
-        svg.append(f'<line x1="1000" y1="175" x2="1000" y2="255" stroke="{wire}" stroke-width="4" />')
-
-        # sem fio horizontal final de retorno
         svg.append(f'<text x="790" y="52" text-anchor="middle" class="label">C₁ = {format_number(c1_uF)} µF</text>')
         svg.append(f'<text x="790" y="212" text-anchor="middle" class="label">C₂ = {format_number(c2_uF)} µF</text>')
         svg.append('<text x="800" y="307" text-anchor="middle" class="small">Capacitores em paralelo</text>')
