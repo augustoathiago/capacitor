@@ -249,7 +249,7 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
     svg.append('<text x="155" y="260" text-anchor="middle" class="tiny">Vf</text>')
 
     # Caminho até resistor
-    svg.append(f'<line x1="120" y1="275" x2="120" y2="300" stroke="{wire}" stroke-width="4" />')  # vertical
+    svg.append(f'<line x1="120" y1="165" x2="120" y2="250" stroke="{wire}" stroke-width="4" />')  # vertical
     svg.append(f'<line x1="240" y1="165" x2="310" y2="165" stroke="{wire}" stroke-width="4" />')
     svg.append(f'<line x1="310" y1="165" x2="360" y2="165" stroke="{wire}" stroke-width="4" />')
     svg.append(svg_resistor(360, 165, length=150, height=20, color=wire))
