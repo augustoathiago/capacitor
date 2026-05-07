@@ -251,7 +251,7 @@ def circuit_svg(config: str, c1_uF: float, c2_uF: float, r_ohm: float, v_source:
         svg.append(svg_cap_series(850, 165, color=accent))
         svg.append(f'<line x1="810" y1="165" x2="842" y2="165" stroke="{wire}" stroke-width="4" />')
         svg.append(f'<line x1="858" y1="165" x2="1000" y2="165" stroke="{wire}" stroke-width="4" />')
-        svg.append(f'<line x1="1000" y1="165" x2="1000" y2="345" stroke="{wire}" stroke-width="4" />')
+        svg.append(f'<line x1="1000" y1="345" x2="120" y2="345" stroke="{wire}" stroke-width="4" />')
 
         # Rótulos reposicionados
         svg.append(f'<text x="850" y="120" text-anchor="middle" class="label">C₂ = {format_number(c2_uF)} µF</text>')
