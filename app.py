@@ -488,7 +488,7 @@ with st.container(border=True):
 # Corrente máxima I0
 # =========================================================
 with st.container(border=True):
-    st.subheader("Corrente máxima I0")
+    st.subheader("Corrente máxima I0 do capacitor equivalente")
     st.write("**Balanço de tensão elétrica:**")
     st.latex(r"V_f = V_r + V_c")
     st.write("onde **Vf**, **Vr** e **Vc** são as tensões na fonte, no resistor e no capacitor equivalente, respectivamente.")
