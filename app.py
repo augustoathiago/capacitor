@@ -434,7 +434,7 @@ with st.container(border=True):
 
     # Série em uma linha só
     st.latex(
-        r"\text{Série:}\quad \frac{1}{C_{eq}} = \frac{1}{C_1} + \frac{1}{C_2} \qquad C_{eq} = \frac{C_1 C_2}{C_1 + C_2}"
+        r"\text{Série:}\quad \frac{1}{C_{eq}} = \frac{1}{C_1} + \frac{1}{C_2} \Rightarrow C_{eq} = \frac{C_1 C_2}{C_1 + C_2}"
     )
     st.latex(r"\text{Paralelo:}\quad C_{eq} = C_1 + C_2")
 
